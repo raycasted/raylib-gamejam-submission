@@ -29,10 +29,10 @@
 PLATFORM              ?= PLATFORM_DESKTOP
 
 # Define project variables
-PROJECT_NAME          ?= raylib_game
+PROJECT_NAME          ?= submission
 PROJECT_VERSION       ?= 1.0
 PROJECT_BUILD_PATH    ?= .
-PROJECT_SOURCE_FILES  ?= raylib_game.c
+PROJECT_SOURCE_FILES  ?= main.c
 
 # raylib library variables
 RAYLIB_PATH           ?= C:/raylib/raylib
@@ -137,12 +137,6 @@ endif
 # Define default make program: MAKE
 #------------------------------------------------------------------------------------------------
 MAKE ?= make
-
-ifeq ($(PLATFORM),PLATFORM_DESKTOP)
-    ifeq ($(PLATFORM_OS),WINDOWS)
-        MAKE = mingw32-make
-    endif
-endif
 
 # Define compiler flags: CFLAGS
 #------------------------------------------------------------------------------------------------
