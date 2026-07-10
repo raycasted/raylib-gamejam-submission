@@ -58,11 +58,13 @@ static void UpdateDrawFrame(void);      // Update and Draw one frame
 static void DrawCubert(Vector2 pos, float radius, float height, Color top, Color left, Color right); // LMAOOO GET IT BECAUSE Q*BERT + CUBE = CUBERT AHAHHAHHAHAHAHAHAH (save me)
 static Vector2 CheckCubertCollision(Vector2 playerPos); // returns {-1, -1} on no block collision
 static void DrawMap();
+static void ResetGame(); // resets player, state, pos, enemies and randomizes color
 float raylibFade = 0.0f; // this is for the raylib logo
 float seconds = 0.0f;
 int secondsLoc;
 // colors:
-Color topPlatformColor = BLUE;
+Color negativeColor = BLUE;
+Color positiveColor = YELLOW;
 Color leftPlatformColor = WHITE;
 Color rightPlatformColor = GRAY;
 // TODO: add logic for player
@@ -72,11 +74,13 @@ Texture2D keysTex;
 Rectangle playerRec;
 Vector2 playerPos = (Vector2){(float)screenWidth/2 - 32, 128 - 84};
 bool canMove = true;
+float recThickness = 0.0f;
 
 #define BLOCK_COUNT 28
 static Vector2 blockPositions[BLOCK_COUNT];
 static Color blockColors[BLOCK_COUNT];
-
+const Color topColorsPositive[4] = {GOLD, PINK, GREEN, BEIGE};
+const Color topColorsNegative[4] = {BLUE, PURPLE, DARKGREEN, ORANGE};
 Shader shader;
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -158,9 +162,7 @@ int main(void){
     blockPositions[n++] = (Vector2){(float)screenWidth/2 - 64, 128 + 288};
     blockPositions[n++] = (Vector2){(float)screenWidth/2 + 64, 128 + 288};
     blockPositions[n++] = (Vector2){(float)screenWidth/2 + 128, 128 + 288};
-    for(int i = 0; i < BLOCK_COUNT; i++){
-        blockColors[i] = topPlatformColor;
-    }
+    
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
@@ -234,6 +236,7 @@ void UpdateDrawFrame(void)
                 if(IsKeyPressed(KEY_ENTER)){
                     // on click
                     frameCounter = 0;
+                    ResetGame();
                     sceneIndex = GAME;
                 }
                 break;
@@ -271,6 +274,29 @@ void UpdateDrawFrame(void)
                     if(frameCounter >= 120){
                         playerPos.y += 5;
                         if(frameCounter%20 == 0) playerRec.width *= -1;
+                    }
+                    if(playerPos.y > 1000){
+                        recThickness += 5;
+                        DrawRectangleLinesEx((Rectangle){0, 0, screenWidth, screenHeight}, recThickness, BLACK);
+                    }
+                    if(playerPos.y > 2000){
+                        int textWidth = MeasureText("GAME OVER!", 96);
+                        
+                        int textStartX = GetScreenWidth()/2 - textWidth / 2;
+                        BeginShaderMode(shader);
+                            DrawText("GAME OVER!", textStartX, 96, 96, RED);
+                        EndShaderMode();
+                    }
+                    if(playerPos.y > 2500){
+                        const char* text = "PRESS ENTER TO TRY AGAIN!";
+
+                        int fontSize = 42;
+                        int textWidth = MeasureText(text, fontSize);
+
+                        int textStartX = GetScreenWidth()/2 - textWidth / 2;
+                        
+                            DrawText(text, textStartX, screenHeight/2 + 240 + 8, fontSize, WHITE);
+                        
                     }
                 }else{
                     if(IsKeyDown(KEY_RIGHT)){
@@ -389,7 +415,7 @@ static void DrawMap(){
             break;
         }
         // WIN
-        playerRec.width *= -1;
+        //playerRec.width *= -1;
         // jump up an down
         //playerRec.y -= 0.1;
     }
@@ -429,4 +455,13 @@ static Vector2 CheckCubertCollision(Vector2 playerPos)
         }
     }
     return (Vector2){-1, -1};
+}
+static void ResetGame(){
+    int rand = GetRandomValue(0, 3);
+    positiveColor = topColorsPositive[rand];
+    negativeColor = topColorsNegative[rand];
+    playerPos = (Vector2){(float)screenWidth/2 - 32, 128 - 84};
+    for(int i = 0; i < BLOCK_COUNT; i++){
+        blockColors[i] = negativeColor;
+    }
 }
