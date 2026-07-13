@@ -44,6 +44,15 @@ enum Keys{
     LEFT_TOP_LEFT_PRESSED = 96*4,
     RIGHT_BOTTOM_RIGHT_PRESSED = 112*4
 };
+typedef enum EnemyType{
+    POSITIVE = 1,
+    NEGATIVE = 0,
+    EMPTY = -1
+} EnemyType;
+typedef struct Enemy{
+    EnemyType type;
+    Vector2 pos;
+} Enemy;
 //----------------------------------------------------------------------------------
 // Global Variables Definition (local to this module)
 //----------------------------------------------------------------------------------
@@ -55,9 +64,13 @@ static int frameCounter = 0;
 
 // TODO: Define global variables here, recommended to make them static
 static enum Scenes sceneIndex = RAYLIB_INTRO;
+
 static void UpdateDrawFrame(void);      // Update and Draw one frame
 static void DrawCubert(Vector2 pos, float radius, float height, Color top, Color left, Color right); // LMAOOO GET IT BECAUSE Q*BERT + CUBE = CUBERT AHAHHAHHAHAHAHAHAH (save me) (only thing thats ai coded**)
 static Vector2 CheckCubertCollision(Vector2 playerPos); // returns {-1, -1} on no block collision
+
+static void UpdateEnemies();
+
 static void DrawMap();
 static void ResetGame(); // resets player, state, pos, enemies and randomizes color
 float raylibFade = 0.0f; // this is for the raylib logo
@@ -82,6 +95,8 @@ float recThickness = 0.0f;
 #define BLOCK_COUNT 28
 static Vector2 blockPositions[BLOCK_COUNT];
 static Color blockColors[BLOCK_COUNT];
+#define MAX_ENEMIES 4
+static Enemy enemies[MAX_ENEMIES];
 const Color topColorsPositive[4] = {GOLD, PINK, GREEN, BEIGE};
 const Color topColorsNegative[4] = {BLUE, PURPLE, DARKGREEN, ORANGE};
 Shader shader;
@@ -538,10 +553,45 @@ static void ResetGame(){
     for(int i = 0; i < BLOCK_COUNT; i++){
         blockColors[i] = negativeColor;
     }
+    for(int i = 0; i < MAX_ENEMIES; i++){
+        enemies[i] = (Enemy){
+            .type = EMPTY,
+            .pos = (Vector2){(float)screenWidth/2 - 32, -40}
+        };
+    }
     hasWon = false;
     playerRec.x = BOTTOM_RIGHT;
     canMove = true;
     PlayMusicStream(bgm);
     frameCounter = 0;
     recThickness = 0.0f;
+}
+static void UpdateEnemies(){
+    for(int i = 0; i < MAX_ENEMIES; i++){
+        if(enemies[i].type != EMPTY){
+            // set pos y to something reasonable if its -40
+            if(enemies[i].type == POSITIVE) DrawCircleV(enemies[i].pos, 32, GREEN);
+            if(enemies[i].type == NEGATIVE) DrawCircleV(enemies[i].pos, 32, RED);
+            int rand = GetRandomValue(0, 3);
+            switch(rand){
+                case 0:
+                    enemies[i].pos.x += 32;
+                    enemies[i].pos.y += 48;
+                case 1:
+                    enemies[i].pos.x -= 32;
+                    enemies[i].pos.y -= 48;
+                case 2:
+                    enemies[i].pos.x += 32;
+                    enemies[i].pos.y -= 48;
+                case 3:
+                    enemies[i].pos.x -= 32;
+                    enemies[i].pos.y += 48;
+                default:
+                    break;
+            }
+            if(CheckCubertCollision(enemies[i].pos).x == -1){
+                enemies[i].type = EMPTY;
+            }
+        }
+    }
 }
