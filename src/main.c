@@ -93,13 +93,12 @@ Rectangle playerRec;
 Vector2 playerPos = (Vector2){(float)screenWidth/2 - 32, 128 - 84};
 bool canMove = true;
 bool hasWon = false;
+bool hasNegativeEnemyHit = false;
 float recThickness = 0.0f;
 
 #define BLOCK_COUNT 28
 static Vector2 blockPositions[BLOCK_COUNT];
 static Color blockColors[BLOCK_COUNT];
-// time since game start, couldnt find a good name :(
-static double gameStartTime;
 #define MAX_ENEMIES 4
 static Enemy enemies[MAX_ENEMIES];
 Texture2D greenSlime;
@@ -326,7 +325,7 @@ void UpdateDrawFrame(void)
                 DrawTextureRec(playerTex, playerRec, playerPos, WHITE);
                 DrawEnemies();
                 // GAME OVER
-                if(CheckCubertCollision(playerPos, 0).x == -1){
+                if(CheckCubertCollision(playerPos, 0).x == -1 || hasNegativeEnemyHit){
                     StopMusicStream(bgm);
                     if(canMove) frameCounter = 0;
                     canMove = false;
@@ -440,10 +439,10 @@ void UpdateDrawFrame(void)
                     }
                 }
                 // ENEMY SPAWN
-                if(frameCounter % 20 == 0){
+                if(frameCounter % 50 == 0 && canMove){
                     SpawnRandomEnemy();
                 }
-                if(frameCounter % 20 == 0) UpdateEnemies();
+                if(frameCounter % 20 == 0 && canMove) UpdateEnemies();
                 
                 
                 
@@ -575,7 +574,6 @@ static Vector2 CheckCubertCollision(Vector2 playerPos, int type)
 }
 static void ResetGame(){
     int rand = GetRandomValue(0, 3);
-    gameStartTime = GetTime();
     positiveColor = topColorsPositive[rand];
     negativeColor = topColorsNegative[rand];
     playerPos = (Vector2){(float)screenWidth/2 - 32, 128 - 84};
@@ -589,6 +587,7 @@ static void ResetGame(){
         };
     }
     hasWon = false;
+    hasNegativeEnemyHit = false;
     playerRec.x = BOTTOM_RIGHT;
     canMove = true;
     PlayMusicStream(bgm);
@@ -628,10 +627,7 @@ static void UpdateEnemies(){
                 enemies[i].type = EMPTY;
                 enemies[i].pos = (Vector2){(float)screenWidth/2 - 32, -40};
             }
-            if(CheckCollisionPointRec(playerPos, (Rectangle){enemies[i].pos.x, enemies[i].pos.y, 64, 64})){
-                // TODO: collision checks
-                if(enemies[i].type == POSITIVE) playerPos.x = -12312;
-            }
+            
         }
     }
 }
@@ -639,11 +635,19 @@ static void DrawEnemies(){
     for(int i = 0; i < MAX_ENEMIES; i++){
         if(enemies[i].type == POSITIVE) DrawTextureV(greenSlime, enemies[i].pos, WHITE);
         if(enemies[i].type == NEGATIVE) DrawTextureV(redSlime, enemies[i].pos, WHITE);
+        if(Vector2Equals(CheckCubertCollision(playerPos, 0), CheckCubertCollision(enemies[i].pos, 1))){
+                // TODO: collision checks
+                if(enemies[i].type == NEGATIVE) canMove = false; hasNegativeEnemyHit = true;
+                if(enemies[i].type == POSITIVE){
+                    hasNegativeEnemyHit = false;
+                }
+            }
     }
     
 }
 static void SpawnRandomEnemy(){
     int i = GetRandomValue(0, MAX_ENEMIES - 1);
     int type = GetRandomValue(0, 1);
+    enemies[i].pos = (Vector2){(float)screenWidth/2 - 32, -40};
     enemies[i].type = type;
 }
